@@ -1,8 +1,9 @@
 import random
 
 class FoodBag:
-    def __init__(self, containedEnergy):
-        self.containedEnergy: float = containedEnergy
+    def __init__(self, containedEnergy, containedDuds):
+        self.containedEnergy: int = containedEnergy
+        self.containedDuds: int = containedDuds
 
 class Animal:
     def __init__(self, extractionThreshold, initialEnergy):
