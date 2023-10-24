@@ -11,3 +11,4 @@
 
 # Bag Parameters
 - Contained Energy
+- Contained Duds
