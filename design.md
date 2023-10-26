@@ -12,3 +12,4 @@
 # Bag Parameters
 - Contained Energy
 - Contained Duds
+- Value per energy item
