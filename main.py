@@ -1,6 +1,8 @@
 import random, math, os
 from copy import copy
 
+import tqdm
+
 def average(iter): return sum(iter) / len(iter)
 
 class FoodBag:
@@ -69,19 +71,19 @@ class World:
 
 class LearningWorld():
     def __init__(self, iterations, noise, initialExtractionThreshold, animalNumber, bags, bagWeights, bagNumber, searchCost, extractionCost):
-        self.iterations     = iterations
-        self.noise          = noise
+        self.iterations          = iterations
+        self.noise               = noise
         self.extractionThreshold = initialExtractionThreshold
-        self.animalNumber   = animalNumber
-        self.bags           = bags
-        self.bagWeights     = bagWeights
-        self.bagNumber      = bagNumber
-        self.searchCost     = searchCost
-        self.extractionCost = extractionCost
+        self.animalNumber        = animalNumber
+        self.bags                = bags
+        self.bagWeights          = bagWeights
+        self.bagNumber           = bagNumber
+        self.searchCost          = searchCost
+        self.extractionCost      = extractionCost
     
     def learn(self):
         for i in range(self.iterations):
-            animals = [Animal(math.floor(self.extractionThreshold + (random.random() - 0.5) * self.noise + 0.5)) for i in range(self.animalNumber - 1)]
+            animals = [Animal(min(max(math.floor(self.extractionThreshold + (random.random() - 0.5) * self.noise + 0.5), 0), 20)) for i in range(self.animalNumber - 1)]
             animals.append(Animal(self.extractionThreshold))
             world = World(animals, self.bags, self.bagWeights, self.bagNumber, self.searchCost, self.extractionCost)
             if self.iterations == i + 1:
@@ -95,13 +97,13 @@ class LearningWorld():
 
             self.extractionThreshold = max(world.animals, key=lambda a: a.energy).extractionThreshold
 
-bags       = [FoodBag(20 - i, i,3) for i in range(20)]
-bagWeights = [0.05 for i in range(20)]
+bags       = [FoodBag(20 - i, i,3) for i in range(21)]
+bagWeights = [1/21 for i in range(21)]
 bagNumber  = 1024
 
 learn = LearningWorld(
-    256,             # Iterations
-    2,               # Noise
+    1024,             # Iterations
+    4,               # Noise
     3,               # Extraction Threshold
     16,              # Number of Animals
     bags,            # List of bags
@@ -111,15 +113,15 @@ learn = LearningWorld(
     1                # Extraction Cost
 )
 
-for world in learn.learn():
+for world in tqdm.tqdm(learn.learn(), total=1024):
     world.animals.sort(key=lambda a: a.energy)
-    print(
-        int(average([a.energy for a in world.animals])),
-        world.animals[0].extractionThreshold,
-        world.animals[0].energy,
-        world.animals[-1].extractionThreshold,
-        world.animals[-1].energy,
-        sep='\t'
-    )
+    # print(
+    #     int(average([a.energy for a in world.animals])),
+    #     world.animals[0].extractionThreshold,
+    #     world.animals[0].energy,
+    #     world.animals[-1].extractionThreshold,
+    #     world.animals[-1].energy,
+    #     sep='\t'
+    # )
 
 os.system("MOVE animals.csv.tmp animals.csv")
