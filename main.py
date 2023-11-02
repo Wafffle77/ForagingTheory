@@ -83,45 +83,62 @@ class LearningWorld():
     
     def learn(self):
         for i in range(self.iterations):
+            oldEnergy = [0.0 for i in range(self.animalNumber)]
             animals = [Animal(min(max(math.floor(self.extractionThreshold + (random.random() - 0.5) * self.noise + 0.5), 0), 20)) for i in range(self.animalNumber - 1)]
             animals.append(Animal(self.extractionThreshold))
-            world = World(animals, self.bags, self.bagWeights, self.bagNumber, self.searchCost, self.extractionCost)
-            if self.iterations == i + 1:
-                world.runDebug()
-            if i == 0:
-                world.runDebug()
-                os.system("MOVE animals.csv.tmp animals0.csv")
-            else:
-                world.run()
-            yield world
+            for j in range(8):
+                for a in animals: a.energy = 0
+                world = World(animals, self.bags, self.bagWeights, self.bagNumber, self.searchCost, self.extractionCost)
+                if self.iterations == i + 1 and j == 0:
+                    world.runDebug()
+                if i == 0 and j == 0:
+                    world.runDebug()
+                    os.system("MOVE animals.csv.tmp animals0.csv")
+                else:
+                    world.run()
+                for k,a in enumerate(animals): oldEnergy[k] += a.energy
+            averageEnergies = [k / 8.0 for k in oldEnergy]
+            yield averageEnergies
+            self.extractionThreshold = animals[max(enumerate(averageEnergies), key=lambda a: a[1])[0]].extractionThreshold
 
-            self.extractionThreshold = max(world.animals, key=lambda a: a.energy).extractionThreshold
-
-bags       = [FoodBag(20 - i, i,3) for i in range(21)]
-bagWeights = [1/21 for i in range(21)]
+bags       = [FoodBag(8,2,3), FoodBag(2,8,3)]
+bagWeights = [0.5, 0.5]
 bagNumber  = 1024
 
-learn = LearningWorld(
-    1024,             # Iterations
-    4,               # Noise
-    3,               # Extraction Threshold
-    16,              # Number of Animals
-    bags,            # List of bags
-    bagWeights,      # Weights of bags 
-    bagNumber,       # Number of bags
-    5,               # Search Cost
-    1                # Extraction Cost
-)
+# learn = LearningWorld(
+#     1024,            # Iterations
+#     4,               # Noise
+#     3,               # Extraction Threshold
+#     16,              # Number of Animals
+#     bags,            # List of bags
+#     bagWeights,      # Weights of bags 
+#     bagNumber,       # Number of bags
+#     5,               # Search Cost
+#     1                # Extraction Cost
+# )
 
-for world in tqdm.tqdm(learn.learn(), total=1024):
-    world.animals.sort(key=lambda a: a.energy)
-    # print(
-    #     int(average([a.energy for a in world.animals])),
-    #     world.animals[0].extractionThreshold,
-    #     world.animals[0].energy,
-    #     world.animals[-1].extractionThreshold,
-    #     world.animals[-1].energy,
-    #     sep='\t'
-    # )
+with open("animals3.csv", "w") as outFile:
+    with tqdm.tqdm(total=8 * 100, desc="sim") as bar:
+        for extractionThreshold in range(1,9):
+            theAverage = 0.0
+            for i in range(100):
+                world = World(
+                    [Animal(extractionThreshold) for i in range(20)],
+                    bags, bagWeights, bagNumber, 
+                    5, 1
+                )
+                world.run()
+                theAverage += sum(a.energy for a in world.animals) / len(world.animals)
+                bar.update()
+            theAverage /= 100.0
+            outFile.write(f"{extractionThreshold},{theAverage}\n")
 
-os.system("MOVE animals.csv.tmp animals.csv")
+# oldAverage = 0.0
+# for world in tqdm.tqdm(learn.learn(), total=learn.iterations): pass
+    # world.animals.sort(key=lambda a: a.energy)
+    # newAverage = int(average([a.energy for a in world.animals]))
+    # if newAverage < oldAverage:
+    #     print(newAverage, oldAverage)
+    # oldAverage = newAverage
+
+# os.system("MOVE animals.csv.tmp animals.csv")
